@@ -1,0 +1,36 @@
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:orientation="horizontal">
+
+    <RelativeLayout
+        android:layout_width="0dp"
+        android:layout_weight=".45"
+        android:layout_height="fill_parent"
+        >
+        <RelativeLayout
+            android:layout_width="fill_parent"
+            android:layout_height="fill_parent"
+            android:id="@+id/rec_camerasurfacelayout"
+            android:layout_centerVertical="true">
+            <org.opencv.android.JavaCameraView
+                android:layout_width="fill_parent"
+                android:layout_height="fill_parent"
+                android:id="@+id/rec_activity_surface_view" />
+        </RelativeLayout>
+    </RelativeLayout>
+    <LinearLayout
+        android:layout_width="0dp"
+        android:layout_weight="0.2"
+        android:layout_height="match_parent"
+        android:orientation="vertical"
+        android:id="@+id/detected_face_imgs_rec">
+        <Button
+            android:layout_width="match_parent"
+            android:layout_height="71dp"
+            android:text="rec person"
+            android:id="@+id/rec_person_button"
+            android:visibility="gone"/>
+    </LinearLayout>
+</LinearLayout>
