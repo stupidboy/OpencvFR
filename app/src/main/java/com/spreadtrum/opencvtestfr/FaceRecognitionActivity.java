@@ -27,6 +27,7 @@ import org.opencv.imgproc.Imgproc;
 import android.app.Activity;
 import android.content.Context;
 import android.graphics.Bitmap;
+import android.net.Uri;
 import android.os.Bundle;
 import android.util.Log;
 import android.view.LayoutInflater;
@@ -39,6 +40,10 @@ import android.widget.Button;
 import android.widget.LinearLayout;
 import android.widget.RelativeLayout;
 import android.widget.Toast;
+
+import com.google.android.gms.appindexing.Action;
+import com.google.android.gms.appindexing.AppIndex;
+import com.google.android.gms.common.api.GoogleApiClient;
 
 /**
  * Created by joe.yu on 2016/5/11.
@@ -78,6 +83,11 @@ public class FaceRecognitionActivity extends Activity implements CvCameraViewLis
 
     private DetectedFaceView[] mFaceViews = new DetectedFaceView[Config.MAX_FACE_NEEDED_REC];
     private Button mSaveButton;
+
+    static {
+        System.loadLibrary("face_detected_jni");
+    }
+
     private BaseLoaderCallback mLoaderCallback = new BaseLoaderCallback(this) {
         @Override
         public void onManagerConnected(int status) {
@@ -155,6 +165,11 @@ public class FaceRecognitionActivity extends Activity implements CvCameraViewLis
             }
         }
     };
+    /**
+     * ATTENTION: This was auto-generated to implement the App Indexing API.
+     * See https://g.co/AppIndexing/AndroidStudio for more information.
+     */
+    private GoogleApiClient client;
 
     public FaceRecognitionActivity() {
         mDetectorName = new String[2];
@@ -182,6 +197,11 @@ public class FaceRecognitionActivity extends Activity implements CvCameraViewLis
         mOpenCvCameraView.setCameraIndex(1);
         mFaceDetectedResult = (LinearLayout) this.findViewById(R.id.detected_face_imgs_rec);
         addFaceDetectedViews();
+        // ATTENTION: This was auto-generated to implement the App Indexing API.
+        // See https://g.co/AppIndexing/AndroidStudio for more information.
+        client = new GoogleApiClient.Builder(this).addApi(AppIndex.API).build();
+        FaceDetection fd  = new FaceDetection();
+        //fd.faceRec(null,"123");
     }
 
     @Override
@@ -319,7 +339,54 @@ public class FaceRecognitionActivity extends Activity implements CvCameraViewLis
         });
     }
 
-    private void recPerson(){}
+    private void recPerson() {
+        Person p = Person.fromFile(this,"joe");
+        FaceDetection fd = new FaceDetection();
+        if(currentFace != null) {
+            fd.faceRec(currentFace.mat.getNativeObjAddr(), "joe");
+        }
+    }
+
+    @Override
+    public void onStart() {
+        super.onStart();
+
+        // ATTENTION: This was auto-generated to implement the App Indexing API.
+        // See https://g.co/AppIndexing/AndroidStudio for more information.
+        client.connect();
+        Action viewAction = Action.newAction(
+                Action.TYPE_VIEW, // TODO: choose an action type.
+                "FaceRecognition Page", // TODO: Define a title for the content shown.
+                // TODO: If you have web page content that matches this app activity's content,
+                // make sure this auto-generated web page URL is correct.
+                // Otherwise, set the URL to null.
+                Uri.parse("http://host/path"),
+                // TODO: Make sure this auto-generated app URL is correct.
+                Uri.parse("android-app://com.spreadtrum.opencvtestfr/http/host/path")
+        );
+        AppIndex.AppIndexApi.start(client, viewAction);
+    }
+
+    @Override
+    public void onStop() {
+        super.onStop();
+
+        // ATTENTION: This was auto-generated to implement the App Indexing API.
+        // See https://g.co/AppIndexing/AndroidStudio for more information.
+        Action viewAction = Action.newAction(
+                Action.TYPE_VIEW, // TODO: choose an action type.
+                "FaceRecognition Page", // TODO: Define a title for the content shown.
+                // TODO: If you have web page content that matches this app activity's content,
+                // make sure this auto-generated web page URL is correct.
+                // Otherwise, set the URL to null.
+                Uri.parse("http://host/path"),
+                // TODO: Make sure this auto-generated app URL is correct.
+                Uri.parse("android-app://com.spreadtrum.opencvtestfr/http/host/path")
+        );
+        AppIndex.AppIndexApi.end(client, viewAction);
+        client.disconnect();
+    }
+
     class updateFaceImg implements Runnable {
         DetectedFaceView mView;
         Bitmap mImg;
@@ -341,7 +408,7 @@ public class FaceRecognitionActivity extends Activity implements CvCameraViewLis
         Person p = new Person(this, "joe", list);
         p.syncFaceToFile();
     }
-
+   private  Face  currentFace = null;
     private void OnFaceCaptured(Face face) {
         //get an invalid pos to add
         boolean valid = true;
@@ -360,6 +427,7 @@ public class FaceRecognitionActivity extends Activity implements CvCameraViewLis
         if (valid) {
             //Toast.makeText(this,"face done",Toast.LENGTH_SHORT).show();
             if (mSaveButton.getVisibility() == View.GONE) {
+                currentFace = face;
                 this.runOnUiThread(new Runnable() {
                     @Override
                     public void run() {
@@ -398,45 +466,46 @@ public class FaceRecognitionActivity extends Activity implements CvCameraViewLis
 
         MatOfRect faces = new MatOfRect();
         MatOfRect eyes = new MatOfRect();
+       if(currentFace == null) {
+           if (mDetectorType == JAVA_DETECTOR) {
+               if (mJavaDetector != null)
+                   mJavaDetector.detectMultiScale(mGray, faces, 1.1, 2,
+                           2, // TODO: objdetect.CV_HAAR_SCALE_IMAGE
+                           new Size(mAbsoluteFaceSize, mAbsoluteFaceSize),
+                           new Size());
+           } else if (mDetectorType == NATIVE_DETECTOR) {
+               //if (mNativeDetector != null)
+               // mNativeDetector.detect(mGray, faces);
+           } else {
+               Log.e(TAG, "Detection method is not selected!");
+           }
 
-        if (mDetectorType == JAVA_DETECTOR) {
-            if (mJavaDetector != null)
-                mJavaDetector.detectMultiScale(mGray, faces, 1.1, 2,
-                        2, // TODO: objdetect.CV_HAAR_SCALE_IMAGE
-                        new Size(mAbsoluteFaceSize, mAbsoluteFaceSize),
-                        new Size());
-        } else if (mDetectorType == NATIVE_DETECTOR) {
-            //if (mNativeDetector != null)
-            // mNativeDetector.detect(mGray, faces);
-        } else {
-            Log.e(TAG, "Detection method is not selected!");
-        }
-
-        Rect[] facesArray = faces.toArray();
+           Rect[] facesArray = faces.toArray();
 
 
-        for (int i = 0; i < facesArray.length; i++) {
-            // Imgproc.rectangle(mRgba, facesArray[i].tl(), facesArray[i].br(),
-            // FACE_RECT_COLOR, 3);
-            // add begin:
-            if (!mEyesDetector.empty()) {
-                Mat faceMat = mGray.submat(facesArray[i]);
-                mEyesDetector.detectMultiScale(faceMat, eyes);
-                Rect[] eyesArray = eyes.toArray();
-                Face out = new Face();
-                out.setFace(facesArray[i]);
-                if (foundCorretEyes(facesArray[i], eyesArray, out) == 1) {
+           for (int i = 0; i < facesArray.length; i++) {
+               // Imgproc.rectangle(mRgba, facesArray[i].tl(), facesArray[i].br(),
+               // FACE_RECT_COLOR, 3);
+               // add begin:
+               if (!mEyesDetector.empty()) {
+                   Mat faceMat = mGray.submat(facesArray[i]);
+                   mEyesDetector.detectMultiScale(faceMat, eyes);
+                   Rect[] eyesArray = eyes.toArray();
+                   Face out = new Face();
+                   out.setFace(facesArray[i]);
+                   if (foundCorretEyes(facesArray[i], eyesArray, out) == 1) {
 
-                    Imgproc.rectangle(mRgba, facesArray[i].tl(),
-                            facesArray[i].br(), FACE_RECT_COLOR, 3);
-                    Imgproc.rectangle(mRgba, out.geteyeABS(true, true), out.geteyeABS(true, false),
-                            EYE_RECT_COLOR_LEFT, 3);
-                    Imgproc.rectangle(mRgba, out.geteyeABS(false, true), out.geteyeABS(false, false), EYE_RECT_COLOR_RIGHT, 3);
-                    out.img = Bitmap.createBitmap(faceMat.cols(), faceMat.rows(), Bitmap.Config.RGB_565);
-                    Utils.matToBitmap(faceMat, out.img);
-                    list.add(out);
-                    OnFaceCaptured(out);
-                }
+                       Imgproc.rectangle(mRgba, facesArray[i].tl(),
+                               facesArray[i].br(), FACE_RECT_COLOR, 3);
+                       Imgproc.rectangle(mRgba, out.geteyeABS(true, true), out.geteyeABS(true, false),
+                               EYE_RECT_COLOR_LEFT, 3);
+                       Imgproc.rectangle(mRgba, out.geteyeABS(false, true), out.geteyeABS(false, false), EYE_RECT_COLOR_RIGHT, 3);
+                       out.img = Bitmap.createBitmap(faceMat.cols(), faceMat.rows(), Bitmap.Config.RGB_565);
+                       Utils.matToBitmap(faceMat, out.img);
+                       out.mat = faceMat;
+                       list.add(out);
+                       OnFaceCaptured(out);
+                   }
                 /*
                 if (detected_right && detected_left) {
 					// face detected...,resize to save the face..
@@ -445,10 +514,10 @@ public class FaceRecognitionActivity extends Activity implements CvCameraViewLis
 
 				}
 				*/
-            }
-            // add end:
-        }
-
+               }
+               // add end:
+           }
+       }
         return mRgba;
     }
 
@@ -496,8 +565,4 @@ public class FaceRecognitionActivity extends Activity implements CvCameraViewLis
             }
         }
     }
-
-
-
-    private native int faceRecognition(long input, String name);
 }
