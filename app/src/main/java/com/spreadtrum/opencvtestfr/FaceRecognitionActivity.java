@@ -97,7 +97,8 @@ public class FaceRecognitionActivity extends Activity implements CvCameraViewLis
 
                     // Load native library after(!) OpenCV initialization
                     //  System.loadLibrary("detection_based_tracker");
-
+                   // System.loadLibrary("native_camera_r4.2.0");
+                    System.loadLibrary("opencv_java");
                     try {
                         // load cascade file from application resources
                         InputStream is = getResources().openRawResource(
@@ -200,7 +201,7 @@ public class FaceRecognitionActivity extends Activity implements CvCameraViewLis
         // ATTENTION: This was auto-generated to implement the App Indexing API.
         // See https://g.co/AppIndexing/AndroidStudio for more information.
         client = new GoogleApiClient.Builder(this).addApi(AppIndex.API).build();
-        FaceDetection fd  = new FaceDetection();
+        FaceDetection fd  = new FaceDetection(this);
         //fd.faceRec(null,"123");
     }
 
@@ -217,7 +218,7 @@ public class FaceRecognitionActivity extends Activity implements CvCameraViewLis
         if (!OpenCVLoader.initDebug()) {
             Log.d(TAG,
                     "Internal OpenCV library not found. Using OpenCV Manager for initialization");
-            OpenCVLoader.initAsync(OpenCVLoader.OPENCV_VERSION_3_0_0, this,
+            OpenCVLoader.initAsync(OpenCVLoader.OPENCV_VERSION_2_4_6, this,
                     mLoaderCallback);
         } else {
             Log.d(TAG, "OpenCV library found inside package. Using it!");
@@ -341,7 +342,7 @@ public class FaceRecognitionActivity extends Activity implements CvCameraViewLis
 
     private void recPerson() {
         Person p = Person.fromFile(this,"joe");
-        FaceDetection fd = new FaceDetection();
+        FaceDetection fd = new FaceDetection(this);
         if(currentFace != null) {
             fd.faceRec(currentFace.mat.getNativeObjAddr(), "joe");
         }
@@ -426,8 +427,8 @@ public class FaceRecognitionActivity extends Activity implements CvCameraViewLis
         }
         if (valid) {
             //Toast.makeText(this,"face done",Toast.LENGTH_SHORT).show();
+            currentFace = face;
             if (mSaveButton.getVisibility() == View.GONE) {
-                currentFace = face;
                 this.runOnUiThread(new Runnable() {
                     @Override
                     public void run() {
@@ -437,6 +438,8 @@ public class FaceRecognitionActivity extends Activity implements CvCameraViewLis
 
             }
 
+        }else{
+            currentFace = null;
         }
     }
 
@@ -495,11 +498,11 @@ public class FaceRecognitionActivity extends Activity implements CvCameraViewLis
                    out.setFace(facesArray[i]);
                    if (foundCorretEyes(facesArray[i], eyesArray, out) == 1) {
 
-                       Imgproc.rectangle(mRgba, facesArray[i].tl(),
+                       Core.rectangle(mRgba, facesArray[i].tl(),
                                facesArray[i].br(), FACE_RECT_COLOR, 3);
-                       Imgproc.rectangle(mRgba, out.geteyeABS(true, true), out.geteyeABS(true, false),
+                       Core.rectangle(mRgba, out.geteyeABS(true, true), out.geteyeABS(true, false),
                                EYE_RECT_COLOR_LEFT, 3);
-                       Imgproc.rectangle(mRgba, out.geteyeABS(false, true), out.geteyeABS(false, false), EYE_RECT_COLOR_RIGHT, 3);
+                       Core.rectangle(mRgba, out.geteyeABS(false, true), out.geteyeABS(false, false), EYE_RECT_COLOR_RIGHT, 3);
                        out.img = Bitmap.createBitmap(faceMat.cols(), faceMat.rows(), Bitmap.Config.RGB_565);
                        Utils.matToBitmap(faceMat, out.img);
                        out.mat = faceMat;
